@@ -95,6 +95,23 @@ static int dbgGetCurrentDirectory(lua_State *L)
     return 1;
 }
 
+/** Implement the Lua function SetCurrentDirectory().
+ * 
+ * Set current work directory for process.
+ * 
+ * \param L Lua state context for the function.
+ * \param path string represent new work directory.
+ * \returns true or rize error
+ */
+static int dbgSetCurrentDirectory(lua_State *L)
+{
+    BOOL ret = SetCurrentDirectoryA(luaL_checkstring(L, 1));
+    if (!ret)
+        return luaL_error(L, "SetCurrentDirectory failed (%d)", GetLastError());
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 /** Implement the Lua function stopping().
  * 
  * Poll the flag used by the request handler thread to signal that
@@ -309,6 +326,7 @@ static const struct luaL_Reg dbgFunctions[] = {
         {"stopping", dbgStopping },
         {"tracelevel", dbgTracelevel },
         {"GetCurrentDirectory", dbgGetCurrentDirectory},
+        {"SetCurrentDirectory", dbgSetCurrentDirectory},
         {"GetCurrentConfiguration", dbgGetCurrentConfiguration},
         {NULL, NULL},
 };
