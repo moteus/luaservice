@@ -1,0 +1,38 @@
+J = path.join
+
+src = c.group{
+  base  = 'src';
+  src   = '*';
+  needs = 'lua';
+}
+
+res = wresource.group{
+  base  = 'src';
+  src   = '*';
+}
+
+LuaService = c.program{'LuaService';
+  base   = 'src';
+  inputs = {src,res};
+  needs  = {'lua'};
+  libs   = {'advapi32'};
+  odir   = J('..' , 'Release');
+}
+
+INSTALL_DIR = 'ship'
+
+ship = target('ship', {
+  file.group{odir=INSTALL_DIR;                src = LuaService  };
+  file.group{odir=INSTALL_DIR;                src = 'Readme.txt'};
+  file.group{odir=J(INSTALL_DIR, 'doc');      src = J('doc', '*.*')};
+  file.group{odir=J(INSTALL_DIR, 'examples'); src = J('Samples', '*.*'); recurse = true};
+})
+
+target('7z', ship, function()
+  print('make LuaService.zip')
+  if not TESTING then
+    lake.chdir('ship')
+    os.execute('7z a -rtzip ../LuaService.zip')
+    lake.chdir('<')
+  end
+end)
