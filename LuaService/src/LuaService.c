@@ -133,20 +133,20 @@ void SvcDebugTrace(LPCSTR fmt, DWORD dw)
     char *cp = Buffer;
 
     if (SvcDebugTraceLevel <= 0)
-	return;
+        return;
     if (SvcDebugTraceLevel == 2)
-	cp += sprintf(Buffer, "[%s] ", ServiceName);
+        cp += sprintf(Buffer, "[%s] ", ServiceName);
     else if (SvcDebugTraceLevel >= 3)
-	cp += sprintf(Buffer, "[%s:%ld/%ld] ", ServiceName,
-		GetCurrentProcessId(), GetCurrentThreadId());
+        cp += sprintf(Buffer, "[%s:%ld/%ld] ", ServiceName,
+                GetCurrentProcessId(), GetCurrentThreadId());
     if (fmt == NULL) {
-	strcpy(cp, "-nil-");
-	OutputDebugStringA(Buffer);
+        strcpy(cp, "-nil-");
+        OutputDebugStringA(Buffer);
     } else if ((strlen(fmt)+12) < (sizeof(Buffer) - (cp - Buffer))) {
-	sprintf(cp, fmt, dw);
-	OutputDebugStringA(Buffer);
+        sprintf(cp, fmt, dw);
+        OutputDebugStringA(Buffer);
     } else
-	OutputDebugStringA("--buffer overflow--");
+        OutputDebugStringA("--buffer overflow--");
 }
 
 /** Output a debug string.
@@ -163,9 +163,9 @@ void SvcDebugTrace(LPCSTR fmt, DWORD dw)
  * \context 
  * Service, Configuration, Control
  *  
- * \param fmt	A printf()-like format string with an optional reference to
- * 		a single string value.
- * \param s	A string value to substitute in the message.
+ * \param fmt   A printf()-like format string with an optional reference to
+ *              a single string value.
+ * \param s     A string value to substitute in the message.
  */
 void SvcDebugTraceStr(LPCSTR fmt, LPCSTR s)
 {
@@ -173,21 +173,21 @@ void SvcDebugTraceStr(LPCSTR fmt, LPCSTR s)
     char *cp = Buffer;
 
     if (SvcDebugTraceLevel <= 0)
-	return;
+        return;
     if (SvcDebugTraceLevel == 2)
-	cp += sprintf(Buffer, "[%s] ", ServiceName);
+        cp += sprintf(Buffer, "[%s] ", ServiceName);
     else if (SvcDebugTraceLevel >= 3)
-	cp += sprintf(Buffer, "[%s:%ld/%ld] ", ServiceName,
-		GetCurrentProcessId(), GetCurrentThreadId());
+        cp += sprintf(Buffer, "[%s:%ld/%ld] ", ServiceName,
+                GetCurrentProcessId(), GetCurrentThreadId());
     if (s == NULL)
-	s = "-nil-";
+        s = "-nil-";
     if (fmt == NULL)
-	fmt = "-nil-";
+        fmt = "-nil-";
     if ((strlen(fmt)+strlen(s)) < sizeof(Buffer) - (cp - Buffer)) {
-	sprintf(cp, fmt, s);
-	OutputDebugStringA(Buffer);
+        sprintf(cp, fmt, s);
+        OutputDebugStringA(Buffer);
     } else
-	OutputDebugStringA("--buffer overflow--");
+        OutputDebugStringA("--buffer overflow--");
 }
 
 /** Service Control Handler.
@@ -220,44 +220,44 @@ void WINAPI LuaServiceCtrlHandler(DWORD Opcode)
     break;
 #endif
     case SERVICE_CONTROL_STOP:
-	// Do whatever it takes to stop here. 
-	SvcDebugTrace("Telling service to stop\n", 0);
-	ServiceStopping = 1;
-	LuaServiceStatus.dwWin32ExitCode = 0;
-	LuaServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-	LuaServiceStatus.dwCheckPoint = 0;
-	LuaServiceStatus.dwWaitHint = 25250;
+        // Do whatever it takes to stop here. 
+        SvcDebugTrace("Telling service to stop\n", 0);
+        ServiceStopping = 1;
+        LuaServiceStatus.dwWin32ExitCode = 0;
+        LuaServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+        LuaServiceStatus.dwCheckPoint = 0;
+        LuaServiceStatus.dwWaitHint = 25250;
 
-	if (!SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus)) {
-	    status = GetLastError();
-	    SvcDebugTrace("SetServiceStatus error %ld\n", status);
-	}
-	if (ServiceWorkerThread != NULL) {
-	    SvcDebugTrace("Waiting 25 s for worker to stop\n", 0);
-	    WaitForSingleObject(ServiceWorkerThread, 25000);
-	    CloseHandle(ServiceWorkerThread);
-	}
-	LuaServiceStatus.dwCurrentState = SERVICE_STOPPED;
-	if (!SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus)) {
-	    status = GetLastError();
-	    SvcDebugTrace("SetServiceStatus error %ld\n", status);
-	}
+        if (!SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus)) {
+            status = GetLastError();
+            SvcDebugTrace("SetServiceStatus error %ld\n", status);
+        }
+        if (ServiceWorkerThread != NULL) {
+            SvcDebugTrace("Waiting 25 s for worker to stop\n", 0);
+            WaitForSingleObject(ServiceWorkerThread, 25000);
+            CloseHandle(ServiceWorkerThread);
+        }
+        LuaServiceStatus.dwCurrentState = SERVICE_STOPPED;
+        if (!SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus)) {
+            status = GetLastError();
+            SvcDebugTrace("SetServiceStatus error %ld\n", status);
+        }
 
-	SvcDebugTrace("Leaving Service\n", 0);
-	return;
+        SvcDebugTrace("Leaving Service\n", 0);
+        return;
 
     case SERVICE_CONTROL_INTERROGATE:
-	// Fall through to send current status. 
-	break;
+        // Fall through to send current status. 
+        break;
 
     default:
-	SvcDebugTrace("Unrecognized opcode %ld\n", Opcode);
+        SvcDebugTrace("Unrecognized opcode %ld\n", Opcode);
     }
 
     // Send current status. 
     if (!SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus)) {
-	status = GetLastError();
-	SvcDebugTrace("SetServiceStatus error %ld\n", status);
+        status = GetLastError();
+        SvcDebugTrace("SetServiceStatus error %ld\n", status);
     }
     return;
 }
@@ -280,15 +280,15 @@ void WINAPI LuaServiceCtrlHandler(DWORD Opcode)
  * 			   This value will be passed to the SCM for logging on failure.
  */
 DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
-	DWORD *perror)
+        DWORD *perror)
 {
     if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-	    GetCurrentProcess(), &ServiceWorkerThread, 0, 
-	    FALSE, 
-	    DUPLICATE_SAME_ACCESS)) {
-	*perror = GetLastError();
-	*ph = NULL;
-	return TRUE;
+            GetCurrentProcess(), &ServiceWorkerThread, 0, 
+            FALSE, 
+            DUPLICATE_SAME_ACCESS)) {
+        *perror = GetLastError();
+        *ph = NULL;
+        return TRUE;
     }
     SvcDebugTraceStr("Load LuaService script %s\n", ServiceScript);
     *ph = LuaWorkerLoad(NULL, ServiceScript);
@@ -298,7 +298,7 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
 }
 
 BOOL LuaServiceSetStatus(DWORD dwCurrentState, DWORD dwCheckPoint,
-	DWORD dwWaitHint)
+        DWORD dwWaitHint)
 {
     LuaServiceStatus.dwCurrentState = dwCurrentState;
     LuaServiceStatus.dwCheckPoint = dwCheckPoint;
@@ -335,50 +335,50 @@ void WINAPI LuaServiceMain(DWORD argc, LPTSTR *argv)
     LuaServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS; // SERVICE_WIN32; 
     LuaServiceStatus.dwCurrentState = SERVICE_START_PENDING;
     LuaServiceStatus.dwControlsAccepted = (0 | SERVICE_ACCEPT_STOP 
-    		//| SERVICE_ACCEPT_SHUTDOWN
+                //| SERVICE_ACCEPT_SHUTDOWN
 #ifdef LUASERVICE_CAN_PAUSE_CONTINUE
-    		| SERVICE_ACCEPT_PAUSE_CONTINUE
+                | SERVICE_ACCEPT_PAUSE_CONTINUE
 #endif
-    		);
+                );
     LuaServiceStatus.dwWin32ExitCode = 0;
     LuaServiceStatus.dwServiceSpecificExitCode = 0;
     LuaServiceStatus.dwCheckPoint = 0;
     LuaServiceStatus.dwWaitHint = 0;
 
     LuaServiceStatusHandle = RegisterServiceCtrlHandler(
-	    ServiceName,
-	    LuaServiceCtrlHandler);
+            ServiceName,
+            LuaServiceCtrlHandler);
 
     if (LuaServiceStatusHandle == (SERVICE_STATUS_HANDLE)0) {
-	SvcDebugTrace("RegisterServiceCtrlHandler failed %d\n",
-		GetLastError());
-	return;
+        SvcDebugTrace("RegisterServiceCtrlHandler failed %d\n",
+                GetLastError());
+        return;
     }
 
     // Initialization code goes here. 
     LuaServiceSetStatus(SERVICE_START_PENDING, 0, 5000);
     status = LuaServiceInitialization(argc, (char **)argv, &wk,
-	    &specificError);
+            &specificError);
     if (status != NO_ERROR) {
-	// Handle error condition 
-	LuaServiceStatus.dwCurrentState = SERVICE_STOPPED;
-	LuaServiceStatus.dwCheckPoint = 0;
-	LuaServiceStatus.dwWaitHint = 0;
-	LuaServiceStatus.dwWin32ExitCode = status;
-	LuaServiceStatus.dwServiceSpecificExitCode = specificError;
+        // Handle error condition 
+        LuaServiceStatus.dwCurrentState = SERVICE_STOPPED;
+        LuaServiceStatus.dwCheckPoint = 0;
+        LuaServiceStatus.dwWaitHint = 0;
+        LuaServiceStatus.dwWin32ExitCode = status;
+        LuaServiceStatus.dwServiceSpecificExitCode = specificError;
 
-	SvcDebugTrace("LuaServiceInitialization exitCode %ld\n", status);
-	SvcDebugTrace("LuaServiceInitialization specificError %ld\n",
-		specificError);
+        SvcDebugTrace("LuaServiceInitialization exitCode %ld\n", status);
+        SvcDebugTrace("LuaServiceInitialization specificError %ld\n",
+                specificError);
 
-	SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus);
-	return;
+        SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus);
+        return;
     }
 
     // Initialization complete - report running status. 
     if (!LuaServiceSetStatus(SERVICE_RUNNING, 0, 0)) {
-	status = GetLastError();
-	SvcDebugTrace("SetServiceStatus error %ld\n", status);
+        status = GetLastError();
+        SvcDebugTrace("SetServiceStatus error %ld\n", status);
     }
 
     // do the work of the service by running the loaded script.
@@ -431,41 +431,41 @@ int main(int argc, char *argv[])
     SvcDebugTrace("Entered main\n", 0);
     lh = LuaWorkerLoad(NULL, "init.lua");
     if (lh) {
-	char *cp;
-	int n;
-	lh = LuaWorkerRun(lh);
-	SvcDebugTrace("... ran init\n", 0);
-	n = LuaResultFieldInt(lh, 1, "tracelevel");
-	SvcDebugTraceLevel = n;
-	cp = LuaResultFieldString(lh, 1, "name");
-	if (cp)
-	    ServiceName = cp;
-	SvcDebugTraceStr("... got name %s", cp);
-	cp = LuaResultFieldString(lh, 1, "script");
-	if (cp)
-	    ServiceScript = cp;
-	SvcDebugTraceStr("... got script %s", cp);
-	SvcDebugTrace("Finished pre-init\n", 0);
-	LuaWorkerCleanup(lh);
+        char *cp;
+        int n;
+        lh = LuaWorkerRun(lh);
+        SvcDebugTrace("... ran init\n", 0);
+        n = LuaResultFieldInt(lh, 1, "tracelevel");
+        SvcDebugTraceLevel = n;
+        cp = LuaResultFieldString(lh, 1, "name");
+        if (cp)
+            ServiceName = cp;
+        SvcDebugTraceStr("... got name %s", cp);
+        cp = LuaResultFieldString(lh, 1, "script");
+        if (cp)
+            ServiceScript = cp;
+        SvcDebugTraceStr("... got script %s", cp);
+        SvcDebugTrace("Finished pre-init\n", 0);
+        LuaWorkerCleanup(lh);
     }
     DispatchTable[0].lpServiceName = (LPSTR)ServiceName;
     DispatchTable[0].lpServiceProc = LuaServiceMain;
     SvcDebugTraceStr("Service name: %s\n", ServiceName);
     if (!StartServiceCtrlDispatcher(DispatchTable)) {
-	DWORD err = GetLastError();
-	if (err == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
-	    /*
-	     * A failure to connect to the SCM implies we are not running 
-	     * under the SCM's control, so we must not be the actual 
-	     * service application. 
-	     * 
-	     * We try being a controller or configurer instead.
-	     */
-	    return SvcControlMain(argc, argv);
-	} else {
-	    SvcDebugTrace("StartServiceCtrlDispatcher failed %ld\n", err);
-	    return EXIT_FAILURE;
-	}
+        DWORD err = GetLastError();
+        if (err == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
+            /*
+             * A failure to connect to the SCM implies we are not running 
+             * under the SCM's control, so we must not be the actual 
+             * service application. 
+             * 
+             * We try being a controller or configurer instead.
+             */
+            return SvcControlMain(argc, argv);
+        } else {
+            SvcDebugTrace("StartServiceCtrlDispatcher failed %ld\n", err);
+            return EXIT_FAILURE;
+        }
     }
     SvcDebugTrace("Leaving main\n", 0);
     return EXIT_SUCCESS;
