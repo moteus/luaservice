@@ -63,7 +63,7 @@ if lsrv.RUN_AS_SERVICE then
   local loadstring = loadstring or load
   local unpack     = table.unpack or unpack
 
-  local function load_src(str)
+  function load_src(str)
     local f, n
     if str:sub(1,1) == '@' then
       n = str:sub(2)
@@ -79,9 +79,8 @@ if lsrv.RUN_AS_SERVICE then
   -------------------------------------------------------------------------------
 
   local ok, err = pcall(function()
-    local lua_init = os.getenv(LUA_INIT)
-    if lua_init and #lua_init > 0 then
-      local init = load_src()
+    if LUA_INIT and #LUA_INIT > 0 then
+      local init = load_src(LUA_INIT)
       init()
     end
   end)
