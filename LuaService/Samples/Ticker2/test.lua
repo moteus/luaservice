@@ -25,7 +25,7 @@ You will want a debug console that is listening to OutputDebugString() to
 see this service do anything at all. DebugView from www.sysinternals.com
 is a good choice.
 --]]----------------------------
-local SERVICE = require "./SERVICE"
+local SERVICE = require "SERVICE"
 
 SERVICE.print("Ticker service started, named ", SERVICE.name)
 
