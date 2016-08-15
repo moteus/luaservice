@@ -1,9 +1,22 @@
 J = path.join
 
+LUA_NEED = 'lua'
+
+DYNAMIC  = true
+
+DEFINES  = {
+  'USE_LUA_ALLOCATOR',
+  -- 'NO_DEBUG_TRACEBACK',
+  -- 'USE_ONLY_MALLOC',
+  -- 'LOG_ALLOCATIONS',
+}
+
 src = c.group{
-  base  = 'src';
-  src   = '*';
-  needs = 'lua';
+  base    = 'src';
+  src     = '*';
+  defines = DEFINES;
+  needs   = LUA_NEED;
+  dynamic = DYNAMIC;
 }
 
 res = wresource.group{
@@ -11,12 +24,15 @@ res = wresource.group{
   src   = '*';
 }
 
+
 LuaService = c.program{'LuaService';
-  base   = 'src';
-  inputs = {src,res};
-  needs  = {'lua'};
-  libs   = {'advapi32'};
-  odir   = J('..' , 'Release');
+  base    = 'src';
+  inputs  = {src,res};
+  defines = DEFINES;
+  needs   = LUA_NEED;
+  dynamic = DYNAMIC;
+  libs    = {'advapi32'};
+  odir    = J('..' , 'Release');
 }
 
 INSTALL_DIR = 'ship'
@@ -32,7 +48,8 @@ target('7z', ship, function()
   print('make LuaService.zip')
   if not TESTING then
     lake.chdir('ship')
-    os.execute('7z a -rtzip ../LuaService.zip')
+    os.execute('7z a -r -tzip ../LuaService.zip')
     lake.chdir('<')
   end
 end)
+

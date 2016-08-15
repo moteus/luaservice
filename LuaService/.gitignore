@@ -1,0 +1,10 @@
+doc/
+ship/
+tmp.doxyfile
+*.dll
+*.exe
+*.zip
+*.d
+*.o
+*.obj
+*.res

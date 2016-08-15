@@ -128,7 +128,6 @@ static int dbgStopping(lua_State *L)
     return 1;
 }
 
-
 /** Implement the Lua function tracelevel(level).
  * 
  * Control the verbosity of trace output to the debug console.
@@ -196,7 +195,7 @@ static int dbgGetCurrentConfiguration(lua_State *L)
 
     name = luaL_optstring(L, 1, ServiceName);
     SvcDebugTraceStr("Get service configuration for %s:\n", name);
-    
+
     // Open a handle to the service. 
     schManager = OpenSCManagerA(NULL, NULL, (0
         |GENERIC_READ
@@ -228,7 +227,7 @@ static int dbgGetCurrentConfiguration(lua_State *L)
         CloseServiceHandle(schManager);
         return luaL_error(L, "Can't allocate lpqscBuf2");
     }
-    
+
     // Get the configuration information. 
     if (! QueryServiceConfig(
         schService,
@@ -275,7 +274,7 @@ static int dbgGetCurrentConfiguration(lua_State *L)
         fieldstr("ServiceStartName", lpqscBuf->lpServiceStartName);
     if (lpqscBuf2->lpDescription != NULL)
         fieldstr("Description", lpqscBuf2->lpDescription);
-    
+
     LocalFree(lpqscBuf);
     LocalFree(lpqscBuf2);
     CloseServiceHandle(schService);
@@ -285,6 +284,7 @@ static int dbgGetCurrentConfiguration(lua_State *L)
 
 /** Private key for a pending compiled but unexecuted Lua chunk. */
 static const char *PENDING_WORK = "Pending Work";
+
 /** Private key for results from a lua chunk. */
 static const char *WORK_RESULTS= "Work Results";
 
@@ -314,7 +314,6 @@ static const char *WORK_RESULTS= "Work Results";
         lua_insert(L,-2);			\
         lua_settable(L,LUA_REGISTRYINDEX);	\
     } while(0)
-
 
 /** List of Lua callable functions for the service object.
  * 
@@ -353,7 +352,7 @@ static void initGlobals(lua_State *L)
 {
     char szPath[MAX_PATH + 1];
     char *cp;
-    
+
     lua_newtable(L);
     GetModuleFileName(GetModuleHandle(NULL), szPath, MAX_PATH);
     lua_pushstring(L,szPath);
@@ -371,13 +370,14 @@ static void initGlobals(lua_State *L)
     lua_setglobal(L, "service");
 #if 0
     luaL_dostring(L,
-            "package.path = string.replace([[@?.lua;@?\\init.lua]],'%@',service.path)\n"
-            "package.cpath = string.replace([[@?.dll;@loadall.dll]],'%@',service.path)\n"
-            );
+        "package.path = string.replace([[@?.lua;@?\\init.lua]],'%@',service.path)\n"
+        "package.cpath = string.replace([[@?.dll;@loadall.dll]],'%@',service.path)\n"
+    );
 #endif
     luaL_dostring(L,
-            "print = service.print\n"
-            "sleep = service.sleep\n");
+        "print = service.print\n"
+        "sleep = service.sleep\n"
+    );
 }
 
 /** Function called in a protected Lua state.
@@ -425,13 +425,13 @@ static int pmain(lua_State *L)
     lua_pop(L,2); /* don't need the light userdata or service objects on the stack */
     if (arg) {
         // load but don't call the code
-        
+
         // first, release any past results
         lua_pushnil(L);
         local_setreg(L,WORK_RESULTS);
         lua_pushnil(L);
         local_setreg(L,PENDING_WORK);
-        
+
         /**
          * \note The script file name is always relative to the 
          * service folder. This protects against substitution of
@@ -458,9 +458,9 @@ static int pmain(lua_State *L)
         int n;
         int i;
         int results;
-        
+
         // call pending code and save any results
-        
+
         // first, release any past results
         lua_pushnil(L);
         local_setreg(L,WORK_RESULTS);
@@ -581,7 +581,7 @@ static void *LuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize) {
  * 
  * \todo Should panic() also tell the SCM SERVICE_STOPPED?
  */
-static int panic (lua_State *L) {
+static int LuaPanic (lua_State *L) {
   (void)L;  /* to avoid warnings */
   SvcDebugTrace("PANIC: unprotected error in call to Lua API...",0);
   SvcDebugTrace(lua_tostring(L, -1), 0);
@@ -607,20 +607,19 @@ LUAHANDLE LuaWorkerLoad(LUAHANDLE h, const char *cmd)
 {
     int status;
     lua_State *L=(lua_State*)h;
-    
     if (!h) {
-#if 0
+#if USE_LUA_ALLOCATOR
         L = luaL_newstate();
 #else
         L = lua_newstate(LuaAlloc, NULL);
 #endif
         assert(L);
-        lua_atpanic(L, &panic); 
+        lua_atpanic(L, &LuaPanic); 
     }
     status = lua_cpcall(L, &pmain, (void*)cmd);
     if (status) {
         SvcDebugTrace("Load script cpcall status %d", status);
-        SvcDebugTrace((char *)lua_tostring(L,-1),0);
+        SvcDebugTrace((char *)lua_tostring(L,-1), 0);
         //return NULL; 
     } else {
         SvcDebugTrace("Script loaded ok", 0);
@@ -639,7 +638,7 @@ LUAHANDLE LuaWorkerRun(LUAHANDLE h)
 {
     int status;
     lua_State *L=(lua_State*)h;
-    
+
     if (!h) {
         SvcDebugTrace("No existing lua state!!!", 0);
         return NULL;
@@ -694,7 +693,6 @@ char *LuaResultString(LUAHANDLE h, int item)
     lua_pop(L,2);
     return ret;
 }
-
 
 /** Get a cached worker result item as an integer.
  * 
@@ -755,7 +753,6 @@ char *LuaResultFieldString(LUAHANDLE h, int item, const char *field)
     lua_pop(L,3);
     return ret;
 }
-
 
 /** Get a field of a cached worker result item as an integer.
  * 
