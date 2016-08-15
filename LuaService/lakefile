@@ -2,7 +2,7 @@ J = path.join
 
 LUA_NEED = 'lua'
 
-DYNAMIC  = true
+-- DYNAMIC  = true
 
 DEFINES  = {
   'USE_LUA_ALLOCATOR',

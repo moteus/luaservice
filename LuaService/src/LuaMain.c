@@ -620,7 +620,8 @@ LUAHANDLE LuaWorkerLoad(LUAHANDLE h, const char *cmd)
     if (status) {
         SvcDebugTrace("Load script cpcall status %d", status);
         SvcDebugTrace((char *)lua_tostring(L,-1), 0);
-        //return NULL; 
+        lua_close(L);
+        L = NULL;
     } else {
         SvcDebugTrace("Script loaded ok", 0);
     }
@@ -642,12 +643,12 @@ LUAHANDLE LuaWorkerRun(LUAHANDLE h)
     if (!h) {
         SvcDebugTrace("No existing lua state!!!", 0);
         return NULL;
-        //L = lua_open(); 
     }
     status = lua_cpcall(L, &pmain, NULL);
     if (status) {
         SvcDebugTrace("Run script cpcall status %d", status);
         SvcDebugTrace((char *)lua_tostring(L,-1),0);
+        return NULL;
     } else {
         SvcDebugTrace("Script succeeded", 0);
     }

@@ -292,6 +292,11 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
     }
     SvcDebugTraceStr("Load LuaService script %s\n", ServiceScript);
     *ph = LuaWorkerLoad(NULL, ServiceScript);
+    if(!*ph){
+        *perror = -1;
+        return TRUE;
+    }
+
     //LuaWorkerSetArgs(argc, argv);
     *perror = 0;
     return NO_ERROR;
@@ -382,8 +387,18 @@ void WINAPI LuaServiceMain(DWORD argc, LPTSTR *argv)
     }
 
     // do the work of the service by running the loaded script.
-    wk = LuaWorkerRun(wk);
+    LuaWorkerRun(wk);
     LuaWorkerCleanup(wk);
+
+    if(!ServiceStopping){
+        SvcDebugTrace("Service main script exit. Stopping service... \n", 0);
+        LuaServiceStatus.dwCurrentState = SERVICE_STOPPED;
+        LuaServiceStatus.dwCheckPoint = 0;
+        LuaServiceStatus.dwWaitHint = 0;
+        LuaServiceStatus.dwWin32ExitCode = 1;
+        LuaServiceStatus.dwServiceSpecificExitCode = -1;
+        SetServiceStatus(LuaServiceStatusHandle, &LuaServiceStatus);
+    }
 
     // we get here only if the script itself returned.
     SvcDebugTrace("Returning to the Main Thread \n", 0);
@@ -426,28 +441,40 @@ int main(int argc, char *argv[])
 {
     LUAHANDLE lh;
     SERVICE_TABLE_ENTRY DispatchTable[2]; // note room for terminating record.
+    char *cp;
+    int n;
+
     memset(DispatchTable, 0, sizeof(DispatchTable));
 
     SvcDebugTrace("Entered main\n", 0);
     lh = LuaWorkerLoad(NULL, "init.lua");
-    if (lh) {
-        char *cp;
-        int n;
-        lh = LuaWorkerRun(lh);
-        SvcDebugTrace("... ran init\n", 0);
-        n = LuaResultFieldInt(lh, 1, "tracelevel");
-        SvcDebugTraceLevel = n;
-        cp = LuaResultFieldString(lh, 1, "name");
-        if (cp)
-            ServiceName = cp;
-        SvcDebugTraceStr("... got name %s", cp);
-        cp = LuaResultFieldString(lh, 1, "script");
-        if (cp)
-            ServiceScript = cp;
-        SvcDebugTraceStr("... got script %s", cp);
-        SvcDebugTrace("Finished pre-init\n", 0);
-        LuaWorkerCleanup(lh);
+
+    if (!lh) {
+        fprintf(stderr, "Can not load `init.lua` file");
+        return EXIT_FAILURE;
     }
+
+    SvcDebugTrace("... ran init\n", 0);
+
+    if (!LuaWorkerRun(lh)) {
+        LuaWorkerCleanup(lh);
+        fprintf(stderr, "Can not execute `init.lua` file");
+        return EXIT_FAILURE;
+    }
+
+    n = LuaResultFieldInt(lh, 1, "tracelevel");
+    SvcDebugTraceLevel = n;
+    cp = LuaResultFieldString(lh, 1, "name");
+    if (cp)
+        ServiceName = cp;
+    SvcDebugTraceStr("... got name %s", cp);
+    cp = LuaResultFieldString(lh, 1, "script");
+    if (cp)
+        ServiceScript = cp;
+    SvcDebugTraceStr("... got script %s", cp);
+    SvcDebugTrace("Finished pre-init\n", 0);
+    LuaWorkerCleanup(lh);
+
     DispatchTable[0].lpServiceName = (LPSTR)ServiceName;
     DispatchTable[0].lpServiceProc = LuaServiceMain;
     SvcDebugTraceStr("Service name: %s\n", ServiceName);
