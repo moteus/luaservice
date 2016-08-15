@@ -54,6 +54,17 @@ const char *ServiceName = "LuaService";
  */
 const char *ServiceScript = "service.lua";
 
+/** Additional info for package.path
+ *
+ */
+const char *LuaPackagePath = NULL;
+
+/** Additional info for package.cpath
+ *
+ */
+const char *LuaPackageCPath = NULL;
+
+
 /** Current service status.
  * 
  * \context 
@@ -92,7 +103,7 @@ HANDLE ServiceWorkerThread;
  * 
  * Values range from zero (no tracing) and up.
  */
-int SvcDebugTraceLevel = 0;
+int SvcDebugTraceLevel = 7;
 
 /** Service Stopping Flag.
  * 
@@ -471,6 +482,12 @@ int main(int argc, char *argv[])
     cp = LuaResultFieldString(lh, 1, "script");
     if (cp)
         ServiceScript = cp;
+    cp = LuaResultFieldString(lh, 1, "lua_path");
+    if (cp)
+        LuaPackagePath = cp;
+    cp = LuaResultFieldString(lh, 1, "lua_cpath");
+    if (cp)
+        LuaPackageCPath = cp;
     SvcDebugTraceStr("... got script %s", cp);
     SvcDebugTrace("Finished pre-init\n", 0);
     LuaWorkerCleanup(lh);

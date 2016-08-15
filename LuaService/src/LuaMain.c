@@ -359,7 +359,7 @@ static void initGlobals(lua_State *L)
     lua_setfield(L,-2,"filename");
     cp = strrchr(szPath, '\\');
     if (cp) {
-        cp[1] = '\0';
+        cp[0] = '\0';
         lua_pushstring(L,szPath);
         lua_setfield(L,-2,"path");
     }
@@ -368,12 +368,47 @@ static void initGlobals(lua_State *L)
     // define a few useful utility functions
     luaL_register(L, NULL, dbgFunctions);
     lua_setglobal(L, "service");
-#if 0
-    luaL_dostring(L,
-        "package.path = string.replace([[@?.lua;@?\\init.lua]],'%@',service.path)\n"
-        "package.cpath = string.replace([[@?.dll;@loadall.dll]],'%@',service.path)\n"
-    );
-#endif
+
+    if(LuaPackagePath){
+        int top = lua_gettop(L);
+        lua_getglobal(L, "package");
+        if(lua_istable(L, -1)){
+            if(LuaPackagePath[0] == '@'){
+                lua_pushstring(L, &LuaPackagePath[1]);
+                lua_setfield(L, -2, "path");
+            }
+            else {
+                lua_pushstring(L, LuaPackagePath);
+                lua_pushliteral(L, ";");
+                lua_getfield(L, -3, "path");
+                lua_concat(L, 3);
+                lua_setfield(L, -2, "path");
+            }
+        }
+        luaL_dostring(L,"package.path = string.gsub(package.path,'!',service.path or '')");
+        lua_settop(L, top);
+    }
+
+    if(LuaPackageCPath){
+        int top = lua_gettop(L);
+        lua_getglobal(L, "package");
+        if(lua_istable(L, -1)){
+            if(LuaPackageCPath[0] == '@'){
+                lua_pushstring(L, &LuaPackageCPath[1]);
+                lua_setfield(L, -2, "cpath");
+            }
+            else {
+                lua_pushstring(L, LuaPackageCPath);
+                lua_pushliteral(L, ";");
+                lua_getfield(L, -3, "cpath");
+                lua_concat(L, 3);
+                lua_setfield(L, -2, "cpath");
+            }
+        }
+        luaL_dostring(L,"package.cpath = string.gsub(package.cpath,'!',service.path or '')");
+        lua_settop(L, top);
+    }
+
     luaL_dostring(L,
         "print = service.print\n"
         "sleep = service.sleep\n"

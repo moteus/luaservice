@@ -23,6 +23,8 @@ extern void SvcDebugTraceStr(LPCSTR fmt, LPCSTR s);
 extern int SvcDebugTraceLevel;
 extern const char *ServiceName;
 extern const char *ServiceScript;
+extern const char *LuaPackagePath;
+extern const char *LuaPackageCPath;
 extern volatile int ServiceStopping;
 
 // From SvcController.c
