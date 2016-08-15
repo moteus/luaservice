@@ -64,7 +64,6 @@ const char *LuaPackagePath = NULL;
  */
 const char *LuaPackageCPath = NULL;
 
-
 /** Current service status.
  * 
  * \context 
@@ -103,7 +102,7 @@ HANDLE ServiceWorkerThread;
  * 
  * Values range from zero (no tracing) and up.
  */
-int SvcDebugTraceLevel = 7;
+int SvcDebugTraceLevel = 0;
 
 /** Service Stopping Flag.
  * 
