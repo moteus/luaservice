@@ -330,6 +330,54 @@ static const struct luaL_Reg dbgFunctions[] = {
         {NULL, NULL},
 };
 
+/** Get full path and file name of application
+ *
+ */
+static char* GetApplicationFileName()
+{
+    size_t pathSize = MAX_PATH + 2;
+    char *szPath = 0;
+    int i;
+
+    /* limit number attempts to ~10M */
+    for(i = 1; i < 10; ++i){
+        DWORD size;
+
+#ifdef USE_ONLY_MALLOC
+        if (szPath) {
+            free(szPath);
+        }
+        szPath = (char *)malloc(pathSize);
+#else
+        szPath = (char *)realloc((void*)szPath, pathSize);
+#endif
+
+        if (!szPath) {
+            return 0;
+        }
+
+        size = GetModuleFileNameA(GetModuleHandle(NULL), szPath, pathSize - 1);
+
+        /*Check either we get some error*/
+        if (size == 0) {
+            free(szPath);
+            return 0;
+        }
+
+        /*we can be sure that path fit to buffer*/
+        if (size < pathSize - 1) {
+            /*GetModuleFileName may not add EOL*/
+            szPath[pathSize - 1] = 0;
+            return szPath;
+        }
+
+        /*buffer may be too small or path equal to pathSize*/
+        pathSize *= 1.5;
+    }
+
+    return 0;
+}
+
 /** Initialize useful Lua globals.
  * 
  * The following globals are created in the Lua state:
@@ -350,19 +398,25 @@ static const struct luaL_Reg dbgFunctions[] = {
  */
 static void initGlobals(lua_State *L)
 {
-    char szPath[MAX_PATH + 1];
-    char *cp;
+    char *szPath;
 
     lua_newtable(L);
-    GetModuleFileName(GetModuleHandle(NULL), szPath, MAX_PATH);
-    lua_pushstring(L,szPath);
-    lua_setfield(L,-2,"filename");
-    cp = strrchr(szPath, '\\');
-    if (cp) {
-        cp[0] = '\0';
+
+    szPath = GetApplicationFileName();
+    if (szPath) {
+        char *cp;
         lua_pushstring(L,szPath);
-        lua_setfield(L,-2,"path");
+        lua_setfield(L,-2,"filename");
+        cp = strrchr(szPath, '\\');
+        if (cp) {
+            cp[0] = '\0';
+            lua_pushstring(L,szPath);
+            lua_setfield(L,-2,"path");
+            SetCurrentDirectoryA(szPath);
+        }
+        free(szPath);
     }
+
     lua_pushstring(L,ServiceName);
     lua_setfield(L,-2,"name");
     // define a few useful utility functions
@@ -444,8 +498,6 @@ static void initGlobals(lua_State *L)
  */ 
 static int pmain(lua_State *L)
 {
-    char szPath[MAX_PATH+1];
-    char *cp;
     char *arg;
     int status;
 
@@ -460,6 +512,8 @@ static int pmain(lua_State *L)
     lua_pop(L,2); /* don't need the light userdata or service objects on the stack */
     if (arg) {
         // load but don't call the code
+        char *szPath, *cp, *scriptPath;
+        size_t scriptPathSize;
 
         // first, release any past results
         lua_pushnil(L);
@@ -472,21 +526,49 @@ static int pmain(lua_State *L)
          * service folder. This protects against substitution of
          * the script by a third party, at least to some degree.
          */
-        GetModuleFileName(GetModuleHandle(NULL), szPath, MAX_PATH);
-        cp = strrchr(szPath, '\\');
-        if (cp) {
-            cp[1] = '\0';
-            if ((cp - szPath) + strlen(arg) + 1 > MAX_PATH)
-                return luaL_error(L, "Script name '%s%s' too long", szPath, arg);
-            strcpy(cp+1, arg);
-        } else {
-            return luaL_error(L, "Module name '%s' isn't fully qualified", szPath);
+        szPath = GetApplicationFileName();
+        if(!szPath){
+            return luaL_error(L, "Can not detect service path");
         }
-        SvcDebugTraceStr("Script: %s\n", szPath); 
-        status = luaL_loadfile(L,szPath);
+
+        cp = strrchr(szPath, '\\');
+
+        if (!cp) {
+            lua_pushstring(L, "Module name '");
+            lua_pushstring(L, szPath);
+            lua_pushstring(L, "' isn't fully qualified");
+            free(szPath);
+            return lua_error(L);
+        }
+
+        cp[1] = '\0';
+        scriptPathSize = (cp - szPath) + strlen(arg) + 1;
+        if (scriptPathSize <= MAX_PATH) {
+            strcpy(cp+1, arg);
+            scriptPath = szPath;
+        }
+        else {
+            scriptPath = (char*)malloc(scriptPathSize + 1);
+            if (!scriptPath) {
+                return luaL_error(L,"No enouth memory");
+            }
+
+            strcpy(scriptPath, szPath);
+            strcat(scriptPath, arg);
+        }
+
+        SvcDebugTraceStr("Script: %s\n", scriptPath); 
+        status = luaL_loadfile(L, scriptPath);
+
+        free(szPath);
+        if (szPath != scriptPath) {
+            free(scriptPath);
+        }
+
         if (status) { 
             return luaL_error(L,"%s\n",lua_tostring(L,-1));
         }
+
         local_setreg(L,PENDING_WORK);
         return 0;
     } else {
