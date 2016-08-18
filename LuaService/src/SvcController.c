@@ -233,11 +233,14 @@ int InstallService() {
     if (!scm)
         ErrorHandler("OpenSCManager", GetLastError());
 
+    if(ServiceDisplayName == NULL)
+        ServiceDisplayName = ServiceName;
+
     //install service
     newService = CreateService(
             scm, //scm database
             ServiceName, //service name
-            ServiceName, //display name
+            ServiceDisplayName, //display name
             SERVICE_ALL_ACCESS, //access rights to the service
             SERVICE_WIN32_OWN_PROCESS, //service type
             SERVICE_AUTO_START, //service start type

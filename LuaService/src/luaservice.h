@@ -22,6 +22,7 @@ extern void SvcDebugTrace(LPCSTR fmt, DWORD Status);
 extern void SvcDebugTraceStr(LPCSTR fmt, LPCSTR s);
 extern int SvcDebugTraceLevel;
 extern const char *ServiceName;
+extern const char *ServiceDisplayName;
 extern const char *ServiceScript;
 extern const char *LuaPackagePath;
 extern const char *LuaPackageCPath;

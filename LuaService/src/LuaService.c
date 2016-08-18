@@ -41,6 +41,15 @@
  */
 const char *ServiceName = "LuaService";
 
+/** Display service name.
+ *
+ * \note This value may be configured for a specific installation 
+ * of this framework by writing a lua script named init.lua that
+ * returns a table with a field <code>display_name</code>. The init.lua 
+ * script must be located in the same folder as LuaService.exe.
+ */
+const char *ServiceDisplayName = NULL;
+
 /** Service launcher script.
  * 
  * This string names the Lua script that acts as the main entry
@@ -56,11 +65,19 @@ const char *ServiceScript = "service.lua";
 
 /** Additional info for package.path
  *
+ * \note This value may be configured for a specific installation 
+ * of this framework by writing a lua script named init.lua that
+ * returns a table with a field <code>lua_path</code>. The init.lua 
+ * script must be located in the same folder as LuaService.exe.
  */
 const char *LuaPackagePath = NULL;
 
 /** Additional info for package.cpath
  *
+ * \note This value may be configured for a specific installation 
+ * of this framework by writing a lua script named init.lua that
+ * returns a table with a field <code>lua_cpath</code>. The init.lua 
+ * script must be located in the same folder as LuaService.exe.
  */
 const char *LuaPackageCPath = NULL;
 
@@ -477,17 +494,20 @@ int main(int argc, char *argv[])
     cp = LuaResultFieldString(lh, 1, "name");
     if (cp)
         ServiceName = cp;
-    SvcDebugTraceStr("... got name %s", cp);
+    SvcDebugTraceStr("... got name %s", ServiceName);
+    cp = LuaResultFieldString(lh, 1, "display_name");
+    if (cp)
+        ServiceDisplayName = cp;
     cp = LuaResultFieldString(lh, 1, "script");
     if (cp)
         ServiceScript = cp;
+    SvcDebugTraceStr("... got script %s", ServiceScript);
     cp = LuaResultFieldString(lh, 1, "lua_path");
     if (cp)
         LuaPackagePath = cp;
     cp = LuaResultFieldString(lh, 1, "lua_cpath");
     if (cp)
         LuaPackageCPath = cp;
-    SvcDebugTraceStr("... got script %s", cp);
     SvcDebugTrace("Finished pre-init\n", 0);
     LuaWorkerCleanup(lh);
 
