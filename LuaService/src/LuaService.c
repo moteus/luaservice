@@ -289,6 +289,39 @@ void WINAPI LuaServiceCtrlHandler(DWORD Opcode)
     return;
 }
 
+static void LuaAppendEnv(const char *name, const char *value){
+  const char *new_value;
+
+  if (!value)
+    return;
+
+  if (value[0] == '@') {
+    new_value = &value[1];
+  }
+  else {
+    const char *existed_value = getenv(name);
+    if (existed_value) {
+      size_t size = strlen(existed_value) + strlen(value) + 2;
+      char *buffer = (char*) malloc(size);
+      strcpy(buffer, value);
+      strcat(buffer, ";");
+      strcat(buffer, existed_value);
+      new_value = buffer;
+    }
+    else {
+      new_value = value;
+    }
+  }
+
+  _putenv_s(name, new_value);
+
+  SvcDebugTraceStr("set env %s=", name); SvcDebugTraceStr("%s\n", new_value);
+
+  if((new_value != &value[0]) && (new_value != &value[1])){
+    free((void*)new_value);
+  }
+}
+
 /** Stup initialization function.
  * 
  * Initialize Lua state then load and compile our script. The script to run
@@ -318,6 +351,15 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
         return TRUE;
     }
     SvcDebugTraceStr("Load LuaService script %s\n", ServiceScript);
+
+    /* This will work only if LuaService.exe and luaXX.dll use 
+     * same msvcr version and not `msvcrt.dll`. But we use this
+     * because if Lua code creates new Lua state (e.g. new thread)
+     * it can read this value.
+     */
+    LuaAppendEnv("LUA_PATH",  LuaPackagePath);
+    LuaAppendEnv("LUA_CPATH", LuaPackageCPath);
+
     *ph = LuaWorkerLoad(NULL, ServiceScript);
     if(!*ph){
         *perror = -1;
