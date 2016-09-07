@@ -14,6 +14,28 @@
 
 #include <time.h>
 
+#if LUA_VERSION_NUM >= 502 
+
+#ifndef luaL_register
+
+void luaL_register (lua_State *L, const char *libname, const luaL_Reg *l){
+  if(libname) lua_newtable(L);
+  luaL_setfuncs(L, l, 0);
+}
+
+#endif
+
+#ifndef lua_cpcall
+
+#define lua_cpcall(L,f,u)  \
+  (lua_pushcfunction(L, (f)), \
+   lua_pushlightuserdata(L,(u)), \
+   lua_pcall(L,1,0,0))
+
+#endif
+
+#endif
+
 /** Implement the Lua function sleep(ms).
  * 
  * Call the Windows Sleep() API to delay thread execution for 
@@ -26,7 +48,7 @@
 static int dbgSleep(lua_State *L)
 {
     int t;
-    t = luaL_checkint(L,1);
+    t = luaL_checkinteger(L,1);
     if (t < 0) t = 0;
     Sleep((DWORD)t);
     return 0;
@@ -141,7 +163,7 @@ static int dbgStopping(lua_State *L)
  */
 static int dbgTracelevel(lua_State *L)
 {
-    SvcDebugTraceLevel = luaL_optint(L,-1,SvcDebugTraceLevel);
+    SvcDebugTraceLevel = luaL_optinteger(L,-1,SvcDebugTraceLevel);
     lua_pushinteger(L,SvcDebugTraceLevel);
     return 1;
 }
