@@ -81,6 +81,15 @@ const char *LuaPackagePath = NULL;
  */
 const char *LuaPackageCPath = NULL;
 
+/** Lua init script
+ *
+ * \note This value may be configured for a specific installation 
+ * of this framework by writing a lua script named init.lua that
+ * returns a table with a field <code>lua_init</code>. The init.lua 
+ * script must be located in the same folder as LuaService.exe.
+ */
+const char *LuaInitScript = NULL;
+
 /** Current service status.
  * 
  * \context 
@@ -322,6 +331,17 @@ static void LuaAppendEnv(const char *name, const char *value){
   }
 }
 
+static void LuaSetEnv(const char *name, const char *value){
+  const char *new_value;
+
+  if (!value)
+    return;
+
+  _putenv_s(name, value);
+
+  SvcDebugTraceStr("set env %s=", name); SvcDebugTraceStr("%s\n", value);
+}
+
 /** Stup initialization function.
  * 
  * Initialize Lua state then load and compile our script. The script to run
@@ -359,6 +379,8 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
      */
     LuaAppendEnv("LUA_PATH",  LuaPackagePath);
     LuaAppendEnv("LUA_CPATH", LuaPackageCPath);
+    LuaSetEnv(LUA_INIT_VAR,       LuaInitScript);
+    LuaSetEnv(LUA_INITVARVERSION, LuaInitScript);
 
     *ph = LuaWorkerLoad(NULL, ServiceScript);
     if(!*ph){
@@ -550,6 +572,9 @@ int main(int argc, char *argv[])
     cp = LuaResultFieldString(lh, 1, "lua_cpath");
     if (cp)
         LuaPackageCPath = cp;
+    cp = LuaResultFieldString(lh, 1, "lua_init");
+    if (cp)
+        LuaInitScript = cp;
     SvcDebugTrace("Finished pre-init\n", 0);
     LuaWorkerCleanup(lh);
 

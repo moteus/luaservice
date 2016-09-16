@@ -400,19 +400,6 @@ static char* GetApplicationFileName()
     return 0;
 }
 
-#ifndef LUA_OK
-#  define LUA_OK 0
-#endif
-
-#define LUA_INIT_VAR "LUA_INIT"
-
-#if defined LUA_VERSION_MAJOR && defined LUA_VERSION_MINOR
-#  define LUA_INITVARVERSION  LUA_INIT_VAR "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
-#else
-#  define LUA_INITVARVERSION  LUA_INIT_VAR
-#endif
-
-
 static void LuaInitEnv(lua_State *L){
     const int top = lua_gettop(L);
     int status;

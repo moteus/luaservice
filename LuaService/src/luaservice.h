@@ -26,9 +26,22 @@ extern const char *ServiceDisplayName;
 extern const char *ServiceScript;
 extern const char *LuaPackagePath;
 extern const char *LuaPackageCPath;
+extern const char *LuaInitScript;
 extern volatile int ServiceStopping;
 
 // From SvcController.c
 extern int SvcControlMain(int argc, char *argv[]);
+
+#ifndef LUA_OK
+#  define LUA_OK 0
+#endif
+
+#define LUA_INIT_VAR "LUA_INIT"
+
+#if defined LUA_VERSION_MAJOR && defined LUA_VERSION_MINOR
+#  define LUA_INITVARVERSION  LUA_INIT_VAR "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
+#else
+#  define LUA_INITVARVERSION  LUA_INIT_VAR
+#endif
 
 #endif /*LUASERVICE_H_*/
