@@ -22,6 +22,10 @@ Service.name  = service and service.name or "LuaService console"
 
 Service.PATH  = service and service.path
 
+-- this function was need because LuaService does not stop service after 
+-- Lua script done. But now it fixed.
+Service.exit  = function() end
+
 if not Service.PATH then
   local lfs = require "lfs"
   Service.PATH = lfs.currentdir()
