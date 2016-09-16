@@ -119,7 +119,7 @@ HANDLE ServiceWorkerThread;
  * 
  * Values range from zero (no tracing) and up.
  */
-int SvcDebugTraceLevel = 0;
+int SvcDebugTraceLevel = 1;
 
 /** Service Stopping Flag.
  * 

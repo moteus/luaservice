@@ -400,6 +400,62 @@ static char* GetApplicationFileName()
     return 0;
 }
 
+#ifndef LUA_OK
+#  define LUA_OK 0
+#endif
+
+#define LUA_INIT_VAR "LUA_INIT"
+
+#if defined LUA_VERSION_MAJOR && defined LUA_VERSION_MINOR
+#  define LUA_INITVARVERSION  LUA_INIT_VAR "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
+#else
+#  define LUA_INITVARVERSION  LUA_INIT_VAR
+#endif
+
+
+static void LuaInitEnv(lua_State *L){
+    const int top = lua_gettop(L);
+    int status;
+    const char *name = "=" LUA_INITVARVERSION;
+    const char *init = getenv(name + 1);
+
+    if (init == NULL) {
+        name = "=" LUA_INIT_VAR;
+        init = getenv(name + 1);  /* try alternative name */
+    }
+
+    if (init == NULL) {
+        return;
+    }
+
+    if (init[0] == '@') {
+        SvcDebugTraceStr("Loading init file: %s\n", init + 1);
+        status = luaL_loadfile(L, init + 1);
+    }
+    else {
+        SvcDebugTraceStr("Loading init string: %s\n", init);
+        status = luaL_loadbuffer(L, init, strlen(init), name);
+    }
+    SvcDebugTrace("Loading status: %d\n", status);
+    SvcDebugTrace("Loading top stack: %d\n", lua_gettop(L));
+
+    if (status != LUA_OK) {
+        SvcDebugTraceStr("Load init fail: %s\n", lua_tostring(L, -1));
+        lua_error(L);
+        return;
+    }
+
+    SvcDebugTraceStr("Load init done\n", NULL);
+
+    SvcDebugTraceStr("Executing init ...\n", NULL);
+
+    lua_call(L, 0, 0);
+
+    SvcDebugTraceStr("Init done\n", NULL);
+
+    assert(top == lua_gettop(L));
+}
+
 /** Initialize useful Lua globals.
  * 
  * The following globals are created in the Lua state:
@@ -445,11 +501,11 @@ static void initGlobals(lua_State *L)
     luaL_register(L, NULL, dbgFunctions);
     lua_setglobal(L, "service");
 
-    if(LuaPackagePath){
+    if (LuaPackagePath) {
         int top = lua_gettop(L);
         lua_getglobal(L, "package");
-        if(lua_istable(L, -1)){
-            if(LuaPackagePath[0] == '@'){
+        if (lua_istable(L, -1)) {
+            if (LuaPackagePath[0] == '@') {
                 lua_pushstring(L, &LuaPackagePath[1]);
                 lua_setfield(L, -2, "path");
             }
@@ -465,7 +521,7 @@ static void initGlobals(lua_State *L)
         lua_settop(L, top);
     }
 
-    if(LuaPackageCPath){
+    if (LuaPackageCPath) {
         int top = lua_gettop(L);
         lua_getglobal(L, "package");
         if(lua_istable(L, -1)){
@@ -489,6 +545,8 @@ static void initGlobals(lua_State *L)
         "print = service.print\n"
         "sleep = service.sleep\n"
     );
+
+    LuaInitEnv(L);
 }
 
 /** Function called in a protected Lua state.
@@ -525,7 +583,7 @@ static int pmain(lua_State *L)
 
     arg = (char *)lua_touserdata(L,-1);
     lua_getglobal(L, "service");
-    if (!lua_toboolean(L,-1)) {
+    if (arg) {
         lua_gc(L, LUA_GCSTOP, 0); /* stop gc during initialization */
         luaL_openlibs(L); /* open libraries */
         initGlobals(L);
@@ -579,7 +637,7 @@ static int pmain(lua_State *L)
             strcat(scriptPath, arg);
         }
 
-        SvcDebugTraceStr("Script: %s\n", scriptPath); 
+        SvcDebugTraceStr("Script: %s\n", scriptPath);
         status = luaL_loadfile(L, scriptPath);
 
         free(szPath);
