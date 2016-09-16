@@ -25,17 +25,15 @@ You will want a debug console that is listening to OutputDebugString() to
 see this service do anything at all. DebugView from www.sysinternals.com
 is a good choice.
 --]]----------------------------
-local SERVICE = require "SERVICE"
+local Service = require "LuaService"
 
-SERVICE.print("Ticker service started, named ", SERVICE.name)
+Service.print("Ticker service started, named ", Service.name)
 
 local i = 0						-- counter
 
-SERVICE.run(function()
+Service.run(function()
   i = i + 1						-- count
-  SERVICE.print("tick", i)		-- OutputDebugString
+  Service.print("tick", i)		-- OutputDebugString
 end, 1000, 5)
 
-SERVICE.print("Ticker service stopped.")
-
-SERVICE.exit(0)
+Service.print("Ticker service stopped.")
