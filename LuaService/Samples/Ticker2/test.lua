@@ -27,7 +27,10 @@ is a good choice.
 --]]----------------------------
 local Service = require "LuaService"
 
-Service.print("Ticker service started, named ", Service.name)
+Service.print(
+  "Ticker service started, named " .. Service.name .. 
+  " run as " .. (Service.RUN_AS_SERVICE and 'service' or 'application')
+)
 
 local i = 0						-- counter
 
