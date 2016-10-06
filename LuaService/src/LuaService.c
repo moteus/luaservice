@@ -63,6 +63,15 @@ const char *ServiceDisplayName = NULL;
  */
 const char *ServiceScript = "service.lua";
 
+/** Additional info for PATH env variable
+ *
+ * \note This value may be configured for a specific installation 
+ * of this framework by writing a lua script named init.lua that
+ * returns a table with a field <code>path</code>. The init.lua 
+ * script must be located in the same folder as LuaService.exe.
+ */
+const char *LuaSystemPath = NULL;
+
 /** Additional info for package.path
  *
  * \note This value may be configured for a specific installation 
@@ -377,8 +386,9 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
      * because if Lua code creates new Lua state (e.g. new thread)
      * it can read this value.
      */
-    LuaAppendEnv("LUA_PATH",  LuaPackagePath);
-    LuaAppendEnv("LUA_CPATH", LuaPackageCPath);
+    LuaAppendEnv("PATH",          LuaSystemPath);
+    LuaAppendEnv("LUA_PATH",      LuaPackagePath);
+    LuaAppendEnv("LUA_CPATH",     LuaPackageCPath);
     LuaSetEnv(LUA_INIT_VAR,       LuaInitScript);
     LuaSetEnv(LUA_INITVARVERSION, LuaInitScript);
 
@@ -566,6 +576,9 @@ int main(int argc, char *argv[])
     if (cp)
         ServiceScript = cp;
     SvcDebugTraceStr("... got script %s", ServiceScript);
+    cp = LuaResultFieldString(lh, 1, "path");
+    if (cp)
+        LuaSystemPath = cp;
     cp = LuaResultFieldString(lh, 1, "lua_path");
     if (cp)
         LuaPackagePath = cp;
