@@ -15,7 +15,7 @@ extern char *LuaResultString(LUAHANDLE h, int item);
 extern int LuaResultInt(LUAHANDLE h, int item);
 extern char *LuaResultFieldString(LUAHANDLE h, int item, const char *field);
 extern int LuaResultFieldInt(LUAHANDLE h, int item, const char *field);
-
+extern void LuaWorkerSetArgs(LUAHANDLE h, size_t argc, const char **argv);
 
 // From LuaService.c
 extern void SvcDebugTrace(LPCSTR fmt, DWORD Status);
@@ -28,6 +28,8 @@ extern const char *LuaPackagePath;
 extern const char *LuaPackageCPath;
 extern const char *LuaInitScript;
 extern volatile int ServiceStopping;
+extern const char **LuaServiceArgv;
+extern size_t LuaServiceArgc;
 
 // From SvcController.c
 extern int SvcControlMain(int argc, char *argv[]);

@@ -1,6 +1,6 @@
 J = path.join
 
-LUA_NEED = 'lua'
+LUA_NEED = 'lua51'
 
 -- DYNAMIC  = true
 

@@ -1,5 +1,7 @@
 local service = service
 
+local argv = arg or _G.arg or {}
+
 local string = require "string"
 
 local dirsep, pathsep = string.match(package.config, "^(.)%s+(.)")
@@ -40,6 +42,8 @@ Service.RUN_AS_SERVICE = not not service
 Service.print = service and service.print or print
 
 Service.name  = service and service.name or "LuaService console"
+
+Service.argv  = argv
 
 -- this function was need because LuaService does not stop service after 
 -- Lua script done. But now it fixed.
@@ -136,6 +140,10 @@ function Service.run(main, stime, scount)
     end
     main()
   end
+end
+
+function Service.stopping()
+  return STOP_FLAG
 end
 
 end

@@ -99,6 +99,10 @@ const char *LuaPackageCPath = NULL;
  */
 const char *LuaInitScript = NULL;
 
+const char **LuaServiceArgv = NULL;
+
+size_t LuaServiceArgc = 0;
+
 /** Current service status.
  * 
  * \context 
@@ -398,7 +402,8 @@ DWORD LuaServiceInitialization(DWORD argc, LPTSTR *argv, LUAHANDLE *ph,
         return TRUE;
     }
 
-    //LuaWorkerSetArgs(argc, argv);
+    LuaWorkerSetArgs(*ph, LuaServiceArgc, LuaServiceArgv);
+
     *perror = 0;
     return NO_ERROR;
 }
@@ -544,6 +549,9 @@ int main(int argc, char *argv[])
     SERVICE_TABLE_ENTRY DispatchTable[2]; // note room for terminating record.
     char *cp;
     int n;
+
+    LuaServiceArgv = argv;
+    LuaServiceArgc = argc;
 
     memset(DispatchTable, 0, sizeof(DispatchTable));
 

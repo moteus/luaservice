@@ -812,6 +812,35 @@ LUAHANDLE LuaWorkerLoad(LUAHANDLE h, const char *cmd)
     return (void *)L;
 }
 
+void LuaWorkerSetArgs(LUAHANDLE h, size_t argc, const char **argv){
+    lua_State *L=(lua_State*)h;
+    size_t i;
+
+    SvcDebugTrace("Set args. argc: %d", argc);
+
+    lua_checkstack(L, 3);
+
+    lua_getglobal(L, "service");
+
+    if(!lua_istable(L, -1)){
+        SvcDebugTrace("Can not find global `service` table", 0);
+        lua_pop(L, 1);
+        return;
+    }
+
+    lua_newtable(L);
+    for(i = 0; i < argc; ++i){
+        SvcDebugTraceStr(" add: `%s`", argv[i]);
+        lua_pushstring(L, argv[i]);
+        lua_rawseti(L, -2, i);
+    }
+    lua_setfield(L, -2, "argv");
+
+    lua_pop(L, 1);
+
+    SvcDebugTrace("Set args done.", 0);
+}
+
 /** Run a pending Lua script.
  * 
  * The script must have been previously loaded and saved in the Lua registry.
