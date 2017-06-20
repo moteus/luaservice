@@ -32,11 +32,13 @@ Service.print(
   " run as " .. (Service.RUN_AS_SERVICE and 'service' or 'application')
 )
 
-local i = 0						-- counter
+local counter = 0
 
+-- Check service stop flag each second,
+-- but call run function each five seconds.
 Service.run(function()
-  i = i + 1						-- count
-  Service.print("tick", i)		-- OutputDebugString
+  counter = counter + 1
+  Service.print("tick", counter)
 end, 1000, 5)
 
 Service.print("Ticker service stopped.")

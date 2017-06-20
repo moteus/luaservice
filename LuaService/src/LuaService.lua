@@ -1,6 +1,6 @@
 local service = service
 
-local argv = arg or _G.arg or {}
+local argv = service and service.argv or arg or _G.arg or {}
 
 local string = require "string"
 
@@ -140,10 +140,6 @@ function Service.run(main, stime, scount)
     end
     main()
   end
-end
-
-function Service.stopping()
-  return STOP_FLAG
 end
 
 end
