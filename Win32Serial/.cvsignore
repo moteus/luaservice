@@ -1,3 +1,0 @@
-*.dll *.pdf
-sermod_wrap_lua.c
-serial_msvcr80 serial_msvcrt
