@@ -3,7 +3,7 @@ version = "scm-0"
 
 source = {
   url = "https://github.com/moteus/luaservice/archive/master.zip",
-  dir = "luaservice-master/LuaService",
+  dir = "luaservice-master",
 }
 
 description = {
